@@ -1,0 +1,5 @@
+{
+    "app_name": "my-grc-app",
+    "region": "us-west-1",
+    "log_level": "info"
+  }
