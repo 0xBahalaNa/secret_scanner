@@ -24,18 +24,33 @@ files_with_issues = set()
 
 skipped_files = 0
 
-# Iterates through every file inside directory. 
-for item in folder.iterdir():
+# Track unique directories encountered during recursion.
+directories_scanned = set()
+
+# Iterates recursively through every file inside directory and its subdirectories.
+# is_file() filters out directories — without this, open() would fail on directories
+# and they'd be silently skipped, giving a misleading skipped_files count.
+for item in folder.rglob("*"):
+    if not item.is_file():
+        continue
+
+    # Record the parent directory so we can report how deep the scan went.
+    directories_scanned.add(item.parent)
+
+    # Build the display path relative to the scan root (e.g., "nested/test.json"
+    # instead of just "test.json") so findings in subdirectories are identifiable.
+    relative_path = item.relative_to(folder)
+
     # Opens the file in read mode and loads the entire content into a string.
     try:
         with open(item, "r") as f:
             contents = f.read()
     except UnicodeDecodeError:
-        print(f"[SKIP] {item.name}: The file type is not compatible.")
+        print(f"[SKIP] {relative_path}: The file type is not compatible.")
         skipped_files += 1
         continue
     except PermissionError:
-        print(f"[SKIP] {item.name}: You do not have the necessary permissions for this file.")
+        print(f"[SKIP] {relative_path}: You do not have the necessary permissions for this file.")
         skipped_files += 1
         continue
 
@@ -47,33 +62,34 @@ for item in folder.iterdir():
 
     # Check for AWS access key pattern ("AKIA...").
     if "AKIA" in contents:
-        print(f'[ALERT] {item.name}: Found potential AWS key (AKIA...).')
+        print(f'[ALERT] {relative_path}: Found potential AWS key (AKIA...).')
         issues += 1             # Increment total alert count.
         found_issue = True      # Mark that this file has an issue.
 
     # Check for the word "password" (case-insensitive).
     if "password" in contents_lower:
-        print(f'[ALERT] {item.name}: Found potential "password" pattern.')
+        print(f'[ALERT] {relative_path}: Found potential "password" pattern.')
         issues += 1
         found_issue = True
 
     # Check for the word "secret" (case-insensitive).
     if "secret" in contents_lower:
-        print(f'[ALERT] {item.name}: Found potential "secret" pattern.')
+        print(f'[ALERT] {relative_path}: Found potential "secret" pattern.')
         issues += 1
         found_issue = True
 
-    # If any alert was found in a file, record the filename in the set.
+    # If any alert was found in a file, record the relative path in the set.
     if found_issue:
-        files_with_issues.add(item.name)
+        files_with_issues.add(str(relative_path))
 
 # Print summary of the scan results, total number of alerts, and unique affected files.
 print("\n--- Scan Summary ---")
+print(f"Directories scanned: {len(directories_scanned)}")
 print(f"Total alerts: {issues}")
 print(f"Files with issues: {len(files_with_issues)}")
 print(f"Skipped files: {skipped_files}")
 
-# List the filenames of affected files. 
+# List the relative paths of affected files so the user knows exactly where to look.
 if files_with_issues:
     print("Affected files:")
     for fname in sorted(files_with_issues):
