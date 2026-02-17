@@ -22,11 +22,22 @@ issues = 0
 # A set to store filenames that triggered at least one alert (avoids duplicates).
 files_with_issues = set()
 
+skipped_files = 0
+
 # Iterates through every file inside directory. 
 for item in folder.iterdir():
     # Opens the file in read mode and loads the entire content into a string.
-    with open(item, "r") as f:
-        contents = f.read()
+    try:
+        with open(item, "r") as f:
+            contents = f.read()
+    except UnicodeDecodeError:
+        print(f"[SKIP] {item.name}: The file type is not compatible.")
+        skipped_files += 1
+        continue
+    except PermissionError:
+        print(f"[SKIP] {item.name}: You do not have the necessary permissions for this file.")
+        skipped_files += 1
+        continue
 
     # Converts the contents to lowercase for case-insensitive searching
     contents_lower = contents.casefold()
@@ -60,6 +71,7 @@ for item in folder.iterdir():
 print("\n--- Scan Summary ---")
 print(f"Total alerts: {issues}")
 print(f"Files with issues: {len(files_with_issues)}")
+print(f"Skipped files: {skipped_files}")
 
 # List the filenames of affected files. 
 if files_with_issues:
