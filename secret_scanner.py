@@ -1,17 +1,38 @@
 """
 secret_scanner.py
 
-This script loads a JSON file and checks for sensitive information such as:
+This script scans a directory for sensitive information such as:
 - AWS credentials
 - API keys
 - Database credentials
+
+Usage:
+    python secret_scanner.py [directory]
+
+If no directory is provided, defaults to test_configs/.
 """
 
-# Importing the Path class from the pathlib module
+import sys
 from pathlib import Path
 
-# Variable to define the directory containing the files that need to be scanned.
-folder = Path("test_configs")
+# Accept a target directory from the command line, or fall back to the default.
+# sys.argv is a list: [script_name, arg1, arg2, ...].
+# len() > 1 means the user passed at least one argument.
+if len(sys.argv) > 1:
+    folder = Path(sys.argv[1])
+else:
+    folder = Path("test_configs")
+
+# Validate that the path exists and is a directory before scanning.
+# Without this check, rglob() on a nonexistent path would raise FileNotFoundError,
+# producing a traceback instead of a clear, actionable error message.
+if not folder.exists():
+    print(f"[ERROR] Path does not exist: {folder}")
+    sys.exit(1)
+
+if not folder.is_dir():
+    print(f"[ERROR] Path is not a directory: {folder}")
+    sys.exit(1)
 
 # Prints a header to let the user know which directory is being scanned.
 print(f"Scanning folder: {folder}")
