@@ -7,21 +7,41 @@ This script scans a directory for sensitive information such as:
 - Database credentials
 
 Usage:
-    python secret_scanner.py [directory]
+    python secret_scanner.py [directory] [--exit-zero]
 
 If no directory is provided, defaults to test_configs/.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
-# Accept a target directory from the command line, or fall back to the default.
-# sys.argv is a list: [script_name, arg1, arg2, ...].
-# len() > 1 means the user passed at least one argument.
-if len(sys.argv) > 1:
-    folder = Path(sys.argv[1])
-else:
-    folder = Path("test_configs")
+# argparse replaces manual sys.argv parsing. It handles --help automatically,
+# validates inputs, and makes adding new flags (like --exit-zero) straightforward.
+parser = argparse.ArgumentParser(
+    description="Scan a directory for secrets, credentials, and sensitive patterns."
+)
+
+# positional argument with a default — the directory to scan.
+# nargs="?" means "zero or one argument," so it's optional.
+parser.add_argument(
+    "directory",
+    nargs="?",
+    default="test_configs",
+    help="Path to the directory to scan (default: test_configs/)",
+)
+
+# --exit-zero: always exit 0, even when findings exist.
+# Useful for informational/audit runs in CI where you want visibility
+# without blocking the pipeline (e.g., during initial secret triage).
+parser.add_argument(
+    "--exit-zero",
+    action="store_true",
+    help="Always exit with code 0, even if alerts are found (informational mode)",
+)
+
+args = parser.parse_args()
+folder = Path(args.directory)
 
 # Validate that the path exists and is a directory before scanning.
 # Without this check, rglob() on a nonexistent path would raise FileNotFoundError,
@@ -115,3 +135,12 @@ if files_with_issues:
     print("Affected files:")
     for fname in sorted(files_with_issues):
         print(f" - {fname}")
+
+# Exit with a non-zero code when secrets are found so CI/CD pipelines fail.
+# Without this, a pipeline step using this scanner would always "pass," meaning
+# the scanner enforces nothing — a finding for SA-11 and CM-3.
+# --exit-zero overrides this for informational/audit-only runs.
+if issues > 0 and not args.exit_zero:
+    sys.exit(1)
+else:
+    sys.exit(0)
