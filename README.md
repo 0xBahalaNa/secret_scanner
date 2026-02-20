@@ -1,4 +1,4 @@
-# secret_scanner
+# Secret Scanner
 
 A Python tool that scans directories for sensitive content such as AWS access keys, passwords, and secrets. Designed for use in CI/CD pipelines and GRC engineering workflows.
 
