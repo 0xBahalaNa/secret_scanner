@@ -53,6 +53,12 @@ python secret_scanner.py --help
 
 In a CI/CD pipeline, the non-zero exit code will cause the step to fail, blocking merges that contain exposed secrets.
 
+## Test Data
+
+The `test_configs/` directory contains **intentionally fake credentials** for testing the scanner. All values use the AWS example key format (`AKIAIOSFODNN7EXAMPLE`) or clearly fake strings.
+
+**Never place real credentials in test files.** If you need to test against real-world patterns, use a `.env` or `.secrets` file — both are excluded from version control by `.gitignore`.
+
 ## Requirements
 
 - Python 3.x (no third-party dependencies)
