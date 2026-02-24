@@ -1,4 +1,5 @@
 {
+    "_comment": "TEST DATA ONLY — all credentials in this file are fake. Never use real secrets in test files.",
     "app_name": "my-grc-app",
     "aws_access_key": "AKIAIOSFODNN7EXAMPLE",
     "database_password": "SuperSecret123!"

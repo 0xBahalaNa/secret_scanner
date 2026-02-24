@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+# Python generates these automatically when importing modules.
+# They're machine-specific and should never be committed.
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+# These directories contain installed packages — often hundreds of files
+# that are already declared in requirements.txt or pyproject.toml.
+venv/
+.venv/
+env/
+
+# Environment and secret files
+# These are the exact files our scanner is designed to detect.
+# Ignoring them here prevents real credentials from being committed.
+*.env
+*.secrets
+.env.*
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
