@@ -82,10 +82,39 @@ for item in folder.rglob("*"):
     # instead of just "test.json") so findings in subdirectories are identifiable.
     relative_path = item.relative_to(folder)
 
-    # Opens the file in read mode and loads the entire content into a string.
+    # Track whether any alert was triggered for this file.
+    found_issue = False
+
+    # Read the file line-by-line using enumerate() so we can report exact
+    # line numbers. enumerate(f, start=1) yields (line_number, line_text)
+    # pairs — this is more Pythonic than maintaining a manual counter.
+    # Line-level reporting satisfies AU-3 (Content of Audit Records):
+    # analysts need to know exactly where a finding is, not just which file.
     try:
         with open(item, "r") as f:
-            contents = f.read()
+            for line_number, line in enumerate(f, start=1):
+                # casefold() for case-insensitive matching — it handles
+                # edge cases that lower() misses (e.g., German ß → ss).
+                line_lower = line.casefold()
+
+                # Check for AWS access key pattern ("AKIA...").
+                if "AKIA" in line:
+                    print(f"[ALERT] {relative_path}:{line_number} — Found potential AWS key (AKIA...)")
+                    issues += 1
+                    found_issue = True
+
+                # Check for the word "password" (case-insensitive).
+                if "password" in line_lower:
+                    print(f'[ALERT] {relative_path}:{line_number} — Found potential "password" pattern')
+                    issues += 1
+                    found_issue = True
+
+                # Check for the word "secret" (case-insensitive).
+                if "secret" in line_lower:
+                    print(f'[ALERT] {relative_path}:{line_number} — Found potential "secret" pattern')
+                    issues += 1
+                    found_issue = True
+
     except UnicodeDecodeError:
         print(f"[SKIP] {relative_path}: The file type is not compatible.")
         skipped_files += 1
@@ -95,31 +124,7 @@ for item in folder.rglob("*"):
         skipped_files += 1
         continue
 
-    # Converts the contents to lowercase for case-insensitive searching
-    contents_lower = contents.casefold()
-
-    # Track whether an alert was triggered for a file.
-    found_issue = False
-
-    # Check for AWS access key pattern ("AKIA...").
-    if "AKIA" in contents:
-        print(f'[ALERT] {relative_path}: Found potential AWS key (AKIA...).')
-        issues += 1             # Increment total alert count.
-        found_issue = True      # Mark that this file has an issue.
-
-    # Check for the word "password" (case-insensitive).
-    if "password" in contents_lower:
-        print(f'[ALERT] {relative_path}: Found potential "password" pattern.')
-        issues += 1
-        found_issue = True
-
-    # Check for the word "secret" (case-insensitive).
-    if "secret" in contents_lower:
-        print(f'[ALERT] {relative_path}: Found potential "secret" pattern.')
-        issues += 1
-        found_issue = True
-
-    # If any alert was found in a file, record the relative path in the set.
+    # If any alert was found in this file, record the relative path in the set.
     if found_issue:
         files_with_issues.add(str(relative_path))
 
