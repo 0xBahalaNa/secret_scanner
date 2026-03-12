@@ -1,0 +1,5 @@
+{
+    "Slack Bot Token": "xoxb-[0-9A-Za-z-]{10,}",
+    "GitHub PAT (Classic)": "ghp_[A-Za-z0-9]{36}",
+    "Stripe Secret Key": "sk_live_[A-Za-z0-9]{24,}"
+}
